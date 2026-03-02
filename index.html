@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Webhook Studio</title>
+<style>
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(135deg, #1e1f22 0%, #18191c 100%);
+  color: #e3e5e8;
+  display: flex;
+  height: 100vh;
+  gap: 40px;
+  padding: 25px;
+  box-sizing: border-box;
+}
+
+.sidebar {
+  width: 45%;
+  padding: 30px;
+  overflow-y: auto;
+  background: rgba(43,45,49,0.85);
+  backdrop-filter: blur(10px);
+  box-shadow: 5px 0 25px rgba(0,0,0,0.3);
+  border-radius: 16px;
+}
+
+.preview {
+  width: 55%;
+  padding: 30px;
+  overflow-y: auto;
+  background: transparent;
+  border-radius: 16px;
+}
+
+h2 {
+  margin-top: 0;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+
+h3 {
+  margin-top: 25px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+input, textarea, select {
+  width: calc(100% - 24px);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: #1a1b1f;
+  border: 1px solid #2f3136;
+  color: white;
+  border-radius: 8px;
+  transition: 0.2s ease;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #5865F2;
+  box-shadow: 0 0 0 2px rgba(88,101,242,0.2);
+}
+
+button {
+  padding: 12px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #5865F2, #4752c4);
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(88,101,242,0.4);
+}
+
+.embed-preview {
+  background: rgba(43,45,49,0.9);
+  border-left: 4px solid #5865F2;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.embed-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.embed-desc {
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.embed-footer {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 10px;
+}
+
+.embed-img {
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.embed-thumb {
+  width: 80px;
+  float: right;
+  border-radius: 8px;
+  margin-left: 10px;
+}
+
+.discord-msg {
+  display: flex;
+  gap: 15px;
+  background: rgba(43,45,49,0.6);
+  padding: 20px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.username {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.message-text {
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2f3136;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f4147;
+}
+
+/* Timestamp Section Styling */
+#embedSection .timestamp-container {
+  background: rgba(30,31,34,0.5);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+#embedSection > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+#embedSection > label input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+
+#timestampControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#timestampControls button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  background: #5865F2;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+#timestampControls button:hover {
+  background: #4752c4;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+<h2>✨ Webhook Studio</h2>
+
+<input id="webhook" placeholder="Webhook URL">
+<input id="username" placeholder="Username">
+<input id="avatar" placeholder="Avatar URL">
+<textarea id="content" placeholder="Message content"></textarea>
+
+<h3>Message Type</h3>
+<select id="messageType">
+  <option value="normal">Normal Message</option>
+  <option value="embed">Embed Message</option>
+</select>
+
+<div id="embedSection" style="display:none;">
+  <h3>Embed Settings</h3>
+  <input id="embedTitle" placeholder="Embed Title">
+  <textarea id="embedDescription" placeholder="Embed Description"></textarea>
+  <label>Embed Color</label>
+  <input type="color" id="embedColorPicker" value="#5865F2">
+  <input id="embedColor" placeholder="Embed Color (hex e.g. 5865F2)" value="5865F2">
+  <input id="embedThumbnail" placeholder="Thumbnail URL">
+  <input id="embedImage" placeholder="Image URL">
+  <input id="embedFooter" placeholder="Footer Text">
+
+<h3>Timestamp</h3>
+
+<div class="timestamp-container">
+<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+  <input type="checkbox" id="embedTimestampEnabled">
+  Enable Timestamp
+</label>
+
+<input type="datetime-local" id="timestampPicker" disabled>
+<button type="button" id="copyTimestampBtn">📋 Copy Timestamp</button>
+<button type="button" id="resetTimestampBtn">🔄 Reset Timestamp</button>
+
+<div id="timestampControls" style="display:none;gap:8px;flex-wrap:wrap;margin-top:10px;">
+  <button type="button" onclick="adjustTime(1,'day')">+1 Day</button>
+  <button type="button" onclick="adjustTime(-1,'day')">-1 Day</button>
+  <button type="button" onclick="adjustTime(1,'week')">+1 Week</button>
+  <button type="button" onclick="adjustTime(-1,'week')">-1 Week</button>
+  <button type="button" onclick="adjustTime(1,'month')">+1 Month</button>
+  <button type="button" onclick="adjustTime(-1,'month')">-1 Month</button>
+  <button type="button" onclick="adjustTime(1,'hour')">+1 Hour</button>
+  <button type="button" onclick="adjustTime(-1,'hour')">-1 Hour</button>
+  <button type="button" onclick="adjustTime(10,'minute')">+10 Min</button>
+  <button type="button" onclick="adjustTime(-10,'minute')">-10 Min</button>
+  <button type="button" onclick="adjustTime(30,'minute')">+30 Min</button>
+  <button type="button" onclick="adjustTime(-30,'minute')">-30 Min</button>
+</div>
+</div>
+
+</div>
+
+<h3>Style Preset</h3>
+<select id="stylePreset">
+  <option value="default">Default</option>
+  <option value="gaming">🎮 Gaming</option>
+  <option value="professional">💼 Professional</option>
+  <option value="announcement">📢 Announcement</option>
+  <option value="neon">🌈 Neon</option>
+</select>
+<div style="display:flex;gap:10px;">
+  <button type="button" onclick="savePreset()">💾 Save</button>
+  <button type="button" onclick="loadPreset()">📂 Load</button>
+</div>
+
+<button onclick="sendWebhook()">Send Webhook</button>
+
+</div>
+
+<div class="preview">
+
+<h2>👀 Live Preview</h2>
+
+<div class="discord-msg">
+  <img id="previewAvatar" class="avatar">
+  <div>
+    <div class="username" id="previewUsername">Username</div>
+    <div class="message-text" id="previewText"></div>
+    <div id="embedPreviewContainer"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+
+const inputs = document.querySelectorAll("input, textarea");
+inputs.forEach(i => i.addEventListener("input", updatePreview));
+document.getElementById("messageType").addEventListener("change", updatePreview);
+
+document.getElementById("embedColorPicker").addEventListener("input", e => {
+  const hex = e.target.value.replace("#","");
+  document.getElementById("embedColor").value = hex;
+  updatePreview();
+});
+
+document.getElementById("stylePreset").addEventListener("change", applyPreset);
+
+const tsEnabled = document.getElementById("embedTimestampEnabled");
+const tsPicker = document.getElementById("timestampPicker");
+const tsControls = document.getElementById("timestampControls");
+
+tsEnabled.addEventListener("change", () => {
+  tsPicker.disabled = !tsEnabled.checked;
+  tsControls.style.display = tsEnabled.checked ? "flex" : "none";
+
+  if (tsEnabled.checked && !tsPicker.value) {
+    const now = new Date();
+    now.setSeconds(0,0);
+    tsPicker.value = now.toISOString().slice(0,16);
+  }
+});
+
+tsPicker.addEventListener("change", updatePreview);
+
+function adjustTime(amount, unit) {
+  if (!tsPicker.value) return;
+
+  const date = new Date(tsPicker.value);
+
+  if (unit === "minute") date.setMinutes(date.getMinutes() + amount);
+  if (unit === "hour") date.setHours(date.getHours() + amount);
+  if (unit === "day") date.setDate(date.getDate() + amount);
+  if (unit === "week") date.setDate(date.getDate() + amount * 7);
+  if (unit === "month") date.setMonth(date.getMonth() + amount);
+
+  tsPicker.value = date.toISOString().slice(0,16);
+  updatePreview();
+}
+
+document.getElementById("copyTimestampBtn").addEventListener("click", () => {
+  if (!tsPicker.value) return alert("No timestamp selected");
+  const date = new Date(tsPicker.value);
+  const unixTime = Math.floor(date.getTime() / 1000);
+  const discordTimestamp = `<t:${unixTime}:f>`; // Discord formatted timestamp
+  navigator.clipboard.writeText(discordTimestamp)
+    .then(() => alert("Discord timestamp copied to clipboard"))
+    .catch(() => alert("Failed to copy timestamp"));
+});
+
+document.getElementById("resetTimestampBtn").addEventListener("click", () => {
+  const now = new Date();
+  now.setSeconds(0,0);
+  tsPicker.value = now.toISOString().slice(0,16);
+  updatePreview();
+});
+
+function applyPreset() {
+  const preset = document.getElementById("stylePreset").value;
+
+  if (preset === "gaming") {
+    document.getElementById("embedColorPicker").value = "#43b581";
+    document.getElementById("embedColor").value = "43b581";
+    document.getElementById("embedFooter").value = "Gaming Panel";
+  }
+
+  if (preset === "professional") {
+    document.getElementById("embedColorPicker").value = "#5865F2";
+    document.getElementById("embedColor").value = "5865F2";
+    document.getElementById("embedFooter").value = "Official Update";
+  }
+
+  if (preset === "announcement") {
+    document.getElementById("embedColorPicker").value = "#faa61a";
+    document.getElementById("embedColor").value = "faa61a";
+    document.getElementById("embedFooter").value = "Announcement";
+  }
+
+  if (preset === "neon") {
+    document.getElementById("embedColorPicker").value = "#ff00ff";
+    document.getElementById("embedColor").value = "ff00ff";
+    document.getElementById("embedFooter").value = "Neon Mode";
+  }
+
+  updatePreview();
+}
+
+function savePreset() {
+  const data = {
+    username: document.getElementById("username").value,
+    avatar: document.getElementById("avatar").value,
+    content: document.getElementById("content").value,
+    embedTitle: document.getElementById("embedTitle").value,
+    embedDescription: document.getElementById("embedDescription").value,
+    embedColor: document.getElementById("embedColor").value,
+    embedThumbnail: document.getElementById("embedThumbnail").value,
+    embedImage: document.getElementById("embedImage").value,
+    embedFooter: document.getElementById("embedFooter").value,
+    embedTimestampEnabled: document.getElementById("embedTimestampEnabled").checked,
+    timestampValue: document.getElementById("timestampPicker").value
+  };
+  localStorage.setItem("webhookPreset", JSON.stringify(data));
+  alert("Preset Saved");
+}
+
+function loadPreset() {
+  const data = JSON.parse(localStorage.getItem("webhookPreset"));
+  if (!data) return alert("No preset saved");
+
+  document.getElementById("username").value = data.username || "";
+  document.getElementById("avatar").value = data.avatar || "";
+  document.getElementById("content").value = data.content || "";
+  document.getElementById("embedTitle").value = data.embedTitle || "";
+  document.getElementById("embedDescription").value = data.embedDescription || "";
+  document.getElementById("embedColor").value = data.embedColor || "5865F2";
+  document.getElementById("embedColorPicker").value = "#" + (data.embedColor || "5865F2");
+  document.getElementById("embedThumbnail").value = data.embedThumbnail || "";
+  document.getElementById("embedImage").value = data.embedImage || "";
+  document.getElementById("embedFooter").value = data.embedFooter || "";
+  document.getElementById("embedTimestampEnabled").checked = data.embedTimestampEnabled || false;
+  document.getElementById("timestampPicker").value = data.timestampValue || "";
+  tsPicker.disabled = !document.getElementById("embedTimestampEnabled").checked;
+  tsControls.style.display = document.getElementById("embedTimestampEnabled").checked ? "flex" : "none";
+
+  updatePreview();
+}
+
+function updatePreview() {
+  document.getElementById("previewUsername").textContent =
+    document.getElementById("username").value || "Username";
+
+  document.getElementById("previewAvatar").src =
+    document.getElementById("avatar").value || 
+    "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+  document.getElementById("previewText").textContent =
+    document.getElementById("content").value;
+
+  const container = document.getElementById("embedPreviewContainer");
+  container.innerHTML = "";
+
+  const type = document.getElementById("messageType").value;
+  document.getElementById("embedSection").style.display =
+    type === "embed" ? "block" : "none";
+
+  if (type === "embed") {
+    const div = document.createElement("div");
+    div.className = "embed-preview";
+
+    const color = document.getElementById("embedColor").value;
+    div.style.borderLeftColor = color ? "#" + color : "#5865F2";
+
+    const title = document.getElementById("embedTitle").value;
+    const desc = document.getElementById("embedDescription").value;
+    const thumbUrl = document.getElementById("embedThumbnail").value;
+    const imgUrl = document.getElementById("embedImage").value;
+    const footerText = document.getElementById("embedFooter").value;
+
+    if (thumbUrl) {
+      const thumb = document.createElement("img");
+      thumb.src = thumbUrl;
+      thumb.className = "embed-thumb";
+      div.appendChild(thumb);
+    }
+
+    if (title) {
+      const titleEl = document.createElement("div");
+      titleEl.className = "embed-title";
+      titleEl.textContent = title;
+      div.appendChild(titleEl);
+    }
+
+    if (desc) {
+      const descEl = document.createElement("div");
+      descEl.className = "embed-desc";
+      descEl.textContent = desc;
+      div.appendChild(descEl);
+    }
+
+    if (imgUrl) {
+      const img = document.createElement("img");
+      img.src = imgUrl;
+      img.className = "embed-img";
+      div.appendChild(img);
+    }
+
+    if (footerText) {
+      const footer = document.createElement("div");
+      footer.className = "embed-footer";
+      footer.textContent = footerText;
+      div.appendChild(footer);
+    }
+
+    container.appendChild(div);
+  }
+}
+
+function sendWebhook() {
+  const webhook = document.getElementById("webhook").value;
+
+  const type = document.getElementById("messageType").value;
+
+  const payload = {
+    username: document.getElementById("username").value || undefined,
+    avatar_url: document.getElementById("avatar").value || undefined,
+  };
+
+  if (type === "normal") {
+    payload.content = document.getElementById("content").value || undefined;
+  } else {
+    payload.embeds = [{
+      title: document.getElementById("embedTitle").value || undefined,
+      description: document.getElementById("embedDescription").value || undefined,
+      color: parseInt(document.getElementById("embedColor").value || "5865F2", 16),
+      thumbnail: document.getElementById("embedThumbnail").value
+        ? { url: document.getElementById("embedThumbnail").value }
+        : undefined,
+      image: document.getElementById("embedImage").value
+        ? { url: document.getElementById("embedImage").value }
+        : undefined,
+      footer: document.getElementById("embedFooter").value
+        ? { text: document.getElementById("embedFooter").value }
+        : undefined
+      // timestamp removed: user can copy/paste manually if desired
+    }];
+  }
+
+  fetch(webhook, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => alert(res.ok ? "Sent!" : "Failed"))
+  .catch(err => alert("Error: " + err));
+}
+
+updatePreview();
+</script>
+
+</body>
+</html>
